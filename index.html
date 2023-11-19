@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Management</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+</head>
+
+<body class="container">
+
+    <br />
+    <br />
+    <br />
+        
+    <div class="row">
+        <h3 id="heading" class="col-md-10">Teachers</h3>
+        <button type="button"  id="add_teacher_button"  class="col-md-2 btn btn-primary pull-right" onclick="display_add_form()">Add Teacher</button>
+        <button type="button"  id="show_teacher_button"  style="display: none;"  class="col-md-2 btn btn-primary" onclick="showTeachers()">Show Teacher</button>
+    </div>
+    
+    <table class="row table table-striped" id="teachers_table">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Age</th>
+                <th>Date Of Birth</th>
+                <th>Number of classes</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+    <div class="row" id="add_teacher_div" style="display: none;">
+        <div class="col-md-3">
+            <label for="full_name">Full Name</label>
+            <input type="text" class="form-control" id="full_name" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="age">Age</label>
+            <input type="number" min=1  class="form-control" id="age" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="dob">Date Of Birth</label>
+            <input type="date" class="form-control" id="dob" />
+        </div>
+        
+        <div class="col-md-3">
+            <label for="num_classes">Number of classes</label>
+            <input type="number" min=1 class="form-control" id="num_classes" />
+        </div> 
+        
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+
+        <div class="row text-center">
+            <button type="button" class="btn btn-primary" onclick="add_teacher()">Add</button>
+        </div>
+    </div>
+
+    <div class="row" id="update_teacher_div" style="display: none;">
+        <input  type="hidden" id="update_id" />
+        <div class="col-md-3">
+            <label for="update_full_name">Full Name</label>
+            <input type="text" class="form-control" id="update_full_name" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="update_age">Age</label>
+            <input type="number" min=1  class="form-control" id="update_age" />
+        </div>
+
+        <div class="col-md-3">
+            <label for="update_dob">Date Of Birth</label>
+            <input type="date" class="form-control" id="update_dob" />
+        </div>
+        
+        <div class="col-md-3">
+            <label for="update_num_classes">Number of classes</label>
+            <input type="number" min=1 class="form-control" id="update_num_classes" />
+        </div> 
+        
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+
+        <div class="row text-center">
+            <button type="button" class="btn btn-primary" onclick="update_teacher()">Update</button>
+        </div>
+    </div>
+
+    <script>
+        const server_url = 'http://127.0.0.1:5000/';
+        const show_teachers_url =  server_url + 'show_teachers';
+        const delete_teacher_url = server_url +  'delete_teacher';
+        const add_teacher_url = server_url + 'add_teacher';
+        const update_teacher_url = server_url + 'update_teacher';
+
+        $(function(){
+            showTeachers();
+        });
+
+        function showTeachers(){
+            fetch(show_teachers_url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                mode: 'cors',
+            }).then(response => response.json())
+            .then(data => {
+                let tableBody = ''
+                data.forEach(teacher => {
+                    let delete_click_event = 'deleteTeacher(' + teacher.id + ')'
+                    let delete_button = '<button class="btn btn-primary" type="button" onclick='+delete_click_event+'>Delete</button>'
+                    
+                    let edit_click_event = 'editTeacher(' + teacher.id + ','+ '"' + teacher.full_name+ '"' + ',' +teacher.age+',"'+teacher.dob+'",'+teacher.num_classes+')'
+                    let edit_button = '<button class="btn btn-primary" type="button" onclick='+edit_click_event+'>Edit</button>'
+
+                    let actions = edit_button + '&nbsp;&nbsp;' + delete_button;
+                    tableBody += '<tr><td>'+teacher.full_name+'</td><td>'+teacher.age+'</td><td>'+teacher.dob+'</td><td>'+teacher.num_classes+'</td><td>'+actions+'</td></tr>'
+                });
+
+                
+                $('#teachers_table tbody').empty();
+                $('#teachers_table tbody').append(tableBody)
+                
+                $('#heading').html('Teachers');
+                $('#add_teacher_button').show();
+                $('#show_teacher_button').hide();
+
+                $('#teachers_table').show();
+                $('#add_teacher_div').hide();
+                $('#update_teacher_div').hide();
+
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function deleteTeacher(id){
+            fetch(`${delete_teacher_url}/${id}`, {
+                method: 'DELETE',
+                mode: 'cors',
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                showTeachers();
+            })
+            .catch(error => console.error('Error:', error));
+            
+        }
+
+        function editTeacher(id, name, age, dob, num_classes){
+            $('#teachers_table').hide();
+            $('#add_teacher_div').hide();
+            $('#update_teacher_div').show();
+            $('#heading').html('Update Teacher');
+            $('#add_teacher_button').hide();
+            $('#show_teacher_button').show();
+
+            $('#update_id').val(id),
+            $('#update_full_name').val(name),
+            $('#update_age').val(age),
+            $('#update_dob').val(dob),
+            $('#update_num_classes').val(num_classes) 
+        }
+
+        function display_add_form(){
+            $('#teachers_table').hide();
+            $('#add_teacher_div').show();
+            $('#update_teacher_div').hide();
+            $('#heading').html('Add Teacher');
+            $('#add_teacher_button').hide();
+            $('#show_teacher_button').show();
+
+            $('#full_name').val(''),
+            $('#age').val(''),
+            $('#dob').val(''),
+            $('#num_classes').val('')
+        }
+
+        function display_update_form(){
+            $('#teachers_table').hide();
+            $('#add_teacher_div').hide();
+            $('#update_teacher_div').show();
+            $('#heading').html('Update Teacher');
+            $('#add_teacher_button').hide();
+            $('#show_teacher_button').show();
+        }
+
+        function add_teacher(){
+            let fullName = $('#full_name').val().trim();
+            let age = parseInt($('#age').val());
+            let dob = $('#dob').val();
+            let num_classes = parseInt($('#num_classes').val());
+
+            if(age == NaN || num_classes == NaN || dob == '' || fullName.length ==  0 ){
+                alert("Please enter all the fields")
+            }else{
+                var formData = {
+                    "full_name": fullName ,
+                    "age": age,
+                    "dob": dob,
+                    "num_classes": num_classes
+                };
+
+                fetch(add_teacher_url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData),
+                    mode: 'cors',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.success);
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+
+        function update_teacher(){
+            let id = $('#update_id').val();
+            let fullName = $('#update_full_name').val().trim();
+            let age = parseInt($('#update_age').val());
+            let dob = $('#update_dob').val();
+            let num_classes = parseInt($('#update_num_classes').val());
+
+            if(age == NaN || num_classes == NaN || dob == '' || fullName.length ==  0 ){
+                alert("Please enter all the fields")
+            }else{
+                var formData = {
+                    "full_name": fullName ,
+                    "age": age,
+                    "dob": dob,
+                    "num_classes": num_classes
+                };
+
+                fetch(`${update_teacher_url}/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData),
+                    mode: 'cors',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.success);
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }    
+
+    </script>
+    
+</body>
+
+</html>
